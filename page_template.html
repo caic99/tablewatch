@@ -4,6 +4,26 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>餐厅周预定情况排名 — 2026 上海秋季餐厅周</title>
+<meta name="description" content="上海餐厅周（2026 锦绣食韵东方·秋季）297 家餐厅、25 天、每个时段的预订情况排名：哪些位子已经订不到了，哪些还能订。每 6 小时更新。">
+<link rel="canonical" href="https://tablewatch.caic.ac.cn/">
+<meta name="theme-color" content="#F4F2F5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#191218" media="(prefers-color-scheme: dark)">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="tablewatch">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:url" content="https://tablewatch.caic.ac.cn/">
+<meta property="og:title" content="餐厅周预定情况排名 — 2026 上海秋季餐厅周">
+<meta property="og:description" content="297 家餐厅、25 天、每个时段的预订情况：哪些位子已经订不到了，哪些还能订。每 6 小时更新。">
+<meta property="og:image" content="https://tablewatch.caic.ac.cn/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="餐厅周预定情况排名 — 已订满、仅剩少量、可预订的色块示意">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="餐厅周预定情况排名 — 2026 上海秋季餐厅周">
+<meta name="twitter:description" content="297 家餐厅、25 天、每个时段的预订情况：哪些位子已经订不到了，哪些还能订。每 6 小时更新。">
+<meta name="twitter:image" content="https://tablewatch.caic.ac.cn/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Noto+Serif+SC:wght@300;600;900&display=swap" rel="stylesheet">
@@ -219,12 +239,13 @@ footer a:hover{color:var(--gone); border-bottom-color:var(--gone)}
    portrait-block strip beside counts — with slack trailing on the right. */
 @media (max-width:1300px){
   :root{--mw:13px}
-  .r{grid-template-columns:38px 190px var(--sw) 58px minmax(0,1fr) 84px;
+  /* score follows the counts; any slack trails at the far right instead of opening a hole */
+  .r{grid-template-columns:38px 190px var(--sw) 58px 84px minmax(0,1fr);
      column-gap:20px; row-gap:4px; padding:15px 0 16px}
   .rk{grid-column:1; grid-row:1/3}
   .nm{grid-column:2/6; grid-row:1}
   .meta{grid-column:2/6; grid-row:2}
-  .score{grid-column:6; grid-row:1/3; align-self:center}
+  .score{grid-column:5; grid-row:1/3; align-self:center}
   .labels{grid-column:2; grid-row:3; margin-top:8px}
   .strip{grid-column:3; grid-row:3; margin-top:8px}
   .counts{grid-column:4; grid-row:3; margin-top:8px}
