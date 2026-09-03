@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>餐厅周预定情况排名 — 2026 上海秋季餐厅周</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=Noto+Serif+SC:wght@300;600;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --page:#F4F2F5; --panel:#EAE6EC; --ink:#2A1D28; --ink-2:#6E5F6B; --ink-3:#9A8D9E;
+  --rule:#DCD6DE; --rule-2:#C7BECB;
+  --gone:#CB4A66; --few:#E0A800; --open:#00806B;
+  --serif:"Noto Serif SC","Songti SC","Source Han Serif SC",Georgia,serif;
+  --sans:"Archivo","Helvetica Neue",-apple-system,"PingFang SC",sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --page:#191218; --panel:#241A22; --ink:#F0E9EE; --ink-2:#A5949F; --ink-3:#776873;
+    --rule:#33262F; --rule-2:#4A3743;
+    --gone:#E05C7A; --few:#E3B341; --open:#00A488;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth; scrollbar-gutter:stable}
+/* Always-visible scrollbars with a clear thumb (styling them also switches macOS off overlay mode). */
+html{scrollbar-width:auto; scrollbar-color:var(--ink-3) var(--panel)}
+::-webkit-scrollbar{width:14px; height:14px}
+::-webkit-scrollbar-track{background:var(--panel)}
+::-webkit-scrollbar-thumb{background:var(--ink-3); border-radius:7px; border:3px solid var(--panel)}
+::-webkit-scrollbar-thumb:hover{background:var(--ink-2)}
+::-webkit-scrollbar-corner{background:var(--panel)}
+body{
+  margin:0; background:var(--page); color:var(--ink);
+  font-family:var(--sans); font-size:16px; line-height:1.5;
+  font-variant-numeric:tabular-nums lining-nums; -webkit-font-smoothing:antialiased;
+}
+.wrap{width:100%; max-width:1680px; margin:0 auto; padding:0 clamp(20px,2.4vw,48px)}
+a{color:inherit; text-decoration:none}
+.nm a{border-bottom:1px solid transparent}
+.nm a:hover{border-bottom-color:var(--gone); color:var(--gone)}
+:focus-visible{outline:2px solid var(--gone); outline-offset:3px; border-radius:2px}
+
+/* masthead */
+.mast{padding:84px 0 0}
+.mast h1{
+  font-family:var(--serif); font-weight:900; margin:0;
+  font-size:clamp(2.6rem,6.6vw,4.9rem); line-height:.95; letter-spacing:-.025em;
+}
+.when{
+  font-family:var(--serif); font-weight:300; color:var(--ink-2); margin:.45rem 0 0;
+  font-size:clamp(1.1rem,2.3vw,1.5rem); line-height:1.3;
+}
+.lede{max-width:64ch; margin:1.9rem 0 0; color:var(--ink-2); font-size:1rem}
+.lede b{color:var(--ink); font-weight:600}
+.stamp{margin:1.4rem 0 0; font-size:.75rem; color:var(--ink-3)}
+.stamp b{font-weight:600; color:var(--ink-2)}
+
+/* controls */
+.controls{
+  position:sticky; top:0; z-index:20; background:var(--page);
+  padding:20px 0 14px; margin-top:44px;
+  border-bottom:1px solid var(--rule-2);
+  display:flex; flex-wrap:wrap; align-items:center; gap:10px 22px;
+}
+.seg{display:flex; gap:6px; flex-wrap:wrap; min-width:0}
+.seg + .seg{position:relative}
+.seg + .seg::before{content:""; position:absolute; left:-11px; top:4px; bottom:4px; width:1px; background:var(--rule-2)}
+button.f{
+  font:inherit; font-size:.8125rem; color:var(--ink-2); background:none; cursor:pointer;
+  border:1px solid var(--rule-2); border-radius:100px; padding:5px 13px; transition:.14s;
+  white-space:nowrap;
+}
+button.f:hover{border-color:var(--ink-3); color:var(--ink)}
+button.f[aria-pressed="true"]{background:var(--ink); border-color:var(--ink); color:var(--page)}
+select.sel{
+  min-width:0; flex-shrink:1;
+  font:inherit; font-size:.8125rem; color:var(--ink-2); background:none; cursor:pointer;
+  border:1px solid var(--rule-2); border-radius:100px; padding:5px 11px; max-width:190px;
+}
+select.sel:hover{border-color:var(--ink-3); color:var(--ink)}
+select.sel[data-on="1"]{background:var(--ink); border-color:var(--ink); color:var(--page)}
+input.q{
+  min-width:0; flex-shrink:1;
+  font:inherit; font-size:.8125rem; color:var(--ink); background:var(--panel);
+  border:1px solid transparent; border-radius:100px; padding:6px 14px; width:184px;
+}
+input.q::placeholder{color:var(--ink-3)}
+input.q:focus{border-color:var(--rule-2); outline:none; background:var(--page)}
+.count{margin-left:auto; font-size:.8125rem; color:var(--ink-3); white-space:nowrap}
+.tools{display:contents}
+
+/* key */
+.key{display:flex; flex-wrap:wrap; gap:10px 24px; padding:16px 0 4px; font-size:.75rem; color:var(--ink-2)}
+.key span{min-width:0}
+.dot{width:9px;height:9px;border-radius:2px;display:inline-block;vertical-align:0;margin-right:6px}
+.dot.tall{height:14px;vertical-align:-3px}
+
+/* the list */
+.list{margin-top:6px}
+.r{
+  content-visibility:auto; contain-intrinsic-size:auto 66px;
+  border-bottom:1px solid var(--rule); padding:13px 0;
+  display:grid; grid-template-columns:38px minmax(300px,1fr) minmax(184px,0.55fr) var(--sw) 58px 84px;
+  column-gap:20px; row-gap:2px; align-items:center;
+}
+.r:hover{background:linear-gradient(90deg,transparent,var(--panel) 5%,var(--panel) 95%,transparent)}
+.r{position:relative; scroll-margin-top:150px}
+.r.hit{background:var(--panel)}
+
+.rk{
+  grid-column:1; grid-row:1/3; font-family:var(--serif); font-weight:300;
+  font-size:1.5rem; color:var(--ink-3); line-height:1.05; text-align:right;
+}
+.r.top .rk{color:var(--gone); font-weight:600}
+.nm{grid-column:2; grid-row:1; font-family:var(--serif); font-weight:600; font-size:1.125rem; line-height:1.3}
+.meta{grid-column:2; grid-row:2; font-size:.75rem; color:var(--ink-2);
+  display:grid; grid-template-columns:minmax(0,68px) minmax(0,78px) minmax(0,76px) minmax(0,1fr)}
+.meta span{border-right:1px solid var(--rule-2); padding-right:8px; margin-right:8px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.meta span:last-child{border-right:0; margin-right:0; padding-right:0}   /* single line; ellipsis if it truly won't fit */
+.meta .rt{color:var(--ink-3)}
+/* price tier and rating sit centred in their fixed columns (desktop grid only) */
+@media (min-width:1151px){
+  .meta span:nth-child(2), .meta span:nth-child(3){text-align:center; padding:0 8px}
+}
+
+.stack{grid-row:1/3; display:grid; grid-template-rows:repeat(var(--n),1fr); row-gap:2px; height:var(--h); align-items:center}
+.labels{grid-column:3}
+.counts{grid-column:5}
+.set{font-size:.75rem; color:var(--ink-2); line-height:1.25;
+  display:grid; grid-template-columns:minmax(0,1fr) 48px 34px; column-gap:8px; align-items:center}
+.set i{font-style:normal; justify-self:start; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.set b{color:var(--ink); font-weight:600; text-align:right; white-space:nowrap}
+.set u{text-decoration:none; display:inline-flex; align-items:center; justify-content:center; gap:3px;
+  border:1px solid var(--rule-2); border-radius:3px; padding:0 4px 0 3px; width:fit-content;
+  font-size:.625rem; color:var(--ink-2); line-height:1.35}
+.set u svg{width:6px; height:7px; fill:currentColor; opacity:.75}
+.counts{text-align:right}
+.counts div{font-size:.6875rem; color:var(--ink-3); white-space:nowrap; line-height:1.25}
+
+.strip{grid-column:4; grid-row:1/3; display:flex; gap:2px; height:var(--h); width:var(--sw);
+  align-items:center; justify-content:flex-start; contain:layout style paint}
+/* Fixed block width per breakpoint: resizing the window must not re-lay 8,700 marks. */
+:root{--mw:16px; --sw:calc(25 * var(--mw) + 48px)}
+.mark{flex:0 0 var(--mw); width:var(--mw); display:flex; flex-direction:column; gap:2px;
+  height:calc(var(--h) / 1.5)}
+.mark.we{height:var(--h)}
+.mark.we i{border-radius:4px}
+.strip.n3 .mark.we i:nth-child(2){flex:0 0 calc((var(--h) / 1.5 - 4px) / 3)}
+.mark i{flex:1; border-radius:3px; background:var(--open)}
+.mark i.g{background:var(--gone)}
+.mark i.f{background:var(--few)}
+.mark i.na{background:var(--rule)}
+.mark i.past{opacity:.22}   /* slot is in the past: no longer reservable */
+
+.score{grid-column:6; grid-row:1/3; text-align:right}
+.score b{display:block; font-size:1.0625rem; font-weight:600; line-height:1.15}
+.score span{font-size:.6875rem; color:var(--ink-2)}
+
+.more{
+  margin:34px 0 0; font:inherit; font-size:.875rem; color:var(--ink-2); cursor:pointer;
+  background:none; border:1px solid var(--rule-2); border-radius:100px; padding:9px 22px;
+}
+.more:hover{border-color:var(--ink); color:var(--ink)}
+.empty{padding:60px 0; color:var(--ink-2); font-size:.9375rem}
+
+footer{margin-top:76px; border-top:1px solid var(--rule-2); padding:24px 0 90px; font-size:.8125rem; color:var(--ink-2)}
+footer p{max-width:66ch}
+footer b{color:var(--ink)}
+footer a{border-bottom:1px solid var(--rule-2)}
+footer a:hover{color:var(--gone); border-bottom-color:var(--gone)}
+
+/* set-menu popover */
+.set button.t{
+  font:inherit; font-size:inherit; color:inherit; background:none; border:0; padding:0;
+  text-align:left; justify-self:start; max-width:100%; overflow:hidden;
+  text-overflow:ellipsis; white-space:nowrap;
+  border-bottom:1px dotted var(--rule-2); cursor:pointer;
+}
+.set button.t:hover{color:var(--ink); border-bottom-color:var(--gone)}
+#pop{
+  position:fixed; z-index:80; width:min(380px,calc(100vw - 32px)); max-height:min(70vh,520px);
+  overflow-y:auto; background:var(--page); color:var(--ink); border:1px solid var(--rule-2);
+  border-radius:8px; box-shadow:0 14px 44px rgba(0,0,0,.24); padding:18px 20px 16px;
+  display:none;
+}
+#pop.on{display:block}
+#pop .ph{padding:0 26px 11px 0; margin-bottom:13px; border-bottom:1px solid var(--rule)}
+#pop .ph h4{font-family:var(--serif); font-weight:600; font-size:1.0625rem; margin:0 0 4px}
+#pop .ph .r{display:block; font-size:.75rem; color:var(--ink-2); white-space:nowrap}
+#pop .rest{font-size:.6875rem; color:var(--ink-3); margin:-7px 0 13px}
+#pop .grp{margin-bottom:15px}
+#pop .grp:last-child{margin-bottom:2px}
+#pop .grp h5{
+  margin:0 0 7px; padding-bottom:5px; border-bottom:1px solid var(--rule);
+  font-family:var(--serif); font-weight:600; font-size:.8125rem; line-height:1.4;
+  color:var(--gone);
+}
+#pop .grp ul{margin:0; padding:0; list-style:none}
+#pop .grp li{font-size:.8125rem; line-height:1.5; padding:3px 0 3px 11px; position:relative}
+#pop .grp li::before{content:""; position:absolute; left:0; top:.72em;
+  width:3px; height:3px; border-radius:50%; background:var(--ink-3)}
+#pop .none{font-size:.8125rem; color:var(--ink-2)}
+#pop .close{position:absolute; top:10px; right:12px; background:none; border:0; cursor:pointer;
+  font:inherit; font-size:1rem; color:var(--ink-3); line-height:1; padding:4px}
+#pop .close:hover{color:var(--ink)}
+#tip{
+  position:fixed; z-index:60; pointer-events:none; opacity:0; transition:opacity .1s;
+  background:var(--ink); color:var(--page); padding:9px 12px; border-radius:4px;
+  font-size:.75rem; line-height:1.45; max-width:236px; box-shadow:0 6px 24px rgba(0,0,0,.25);
+}
+#tip b{font-family:var(--serif); font-weight:600; font-size:.8125rem; display:block; margin-bottom:3px}
+#tip.on{opacity:1}
+
+/* Mid widths: two lines per row. Line 1 is identity (rank · name · meta · score) at full
+   width so nothing wraps; line 2 is the data line exactly as on desktop — set labels beside a
+   portrait-block strip beside counts — with slack trailing on the right. */
+@media (max-width:1300px){
+  :root{--mw:13px}
+  .r{grid-template-columns:38px 190px var(--sw) 58px minmax(0,1fr) 84px;
+     column-gap:20px; row-gap:4px; padding:15px 0 16px}
+  .rk{grid-column:1; grid-row:1/3}
+  .nm{grid-column:2/6; grid-row:1}
+  .meta{grid-column:2/6; grid-row:2}
+  .score{grid-column:6; grid-row:1/3; align-self:center}
+  .labels{grid-column:2; grid-row:3; margin-top:8px}
+  .strip{grid-column:3; grid-row:3; margin-top:8px}
+  .counts{grid-column:4; grid-row:3; margin-top:8px}
+}
+@media (max-width:1000px){ :root{--mw:10px} }
+/* Narrow: a single stack — the strip sits under the set lines at a fixed width. */
+@media (max-width:820px){
+  :root{--mw:10px}
+  /* filters: one line per group, scroll sideways, scrollbar hidden */
+  /* frameless: thin content gutter, and the filter rows bleed to the screen edges */
+  .wrap{padding:0 12px}
+  .controls{margin-left:-12px; margin-right:-12px; padding-left:0; padding-right:0}
+  .controls > .seg, .tools{margin:0; padding:0 12px; scroll-padding:0 12px}
+  /* nowrap matters: a multi-line column flexbox stretches items to the line, not the container */
+  .controls{flex-direction:column; flex-wrap:nowrap; align-items:stretch; gap:7px; padding:10px 0 8px; margin-top:28px}
+  .when{font-size:1rem}
+  .controls > .seg, .tools{
+    display:flex; flex-wrap:nowrap; align-items:center; gap:6px; min-width:0;
+    overflow-x:auto; overflow-y:hidden; -webkit-overflow-scrolling:touch;
+    scrollbar-width:none; padding-bottom:1px;
+  }
+  .controls > .seg::-webkit-scrollbar, .tools::-webkit-scrollbar{display:none}
+  .seg + .seg::before{display:none}
+  .tools .seg{display:contents}
+  button.f, select.sel{flex:none; font-size:.75rem; padding:4px 11px}
+  select.sel{max-width:150px}
+  input.q{flex:none; width:150px; font-size:.75rem; padding:5px 12px}
+  .count{flex:none; margin-left:4px; font-size:.75rem}
+  .key{padding:10px 0 2px}
+  .r{grid-template-columns:34px minmax(0,1fr) 72px; column-gap:14px; row-gap:8px; padding:16px 0 18px}
+  .rk{grid-column:1; grid-row:1; font-size:1.35rem}
+  .nm{grid-column:2; grid-row:1; font-size:1.0625rem}
+  .score{grid-column:3; grid-row:1; align-self:start}
+  .score b{font-size:1rem}
+  .meta{grid-column:2/4; grid-row:2; display:flex; flex-wrap:wrap; gap:1px 0}
+  .meta span{overflow:visible}
+  .labels{grid-column:2; grid-row:3; max-width:460px; margin-top:0}
+  .counts{grid-column:3; grid-row:3; margin-top:0}
+  .stack{height:auto; grid-template-rows:none; row-gap:4px}
+  /* fixed-width blocks here too: same shape on every device, flush with the name; slack trails right */
+  .strip{grid-column:2/4; grid-row:4; height:30px; margin-top:0; justify-self:start}
+  .mark{height:20px}
+  .mark.we{height:30px}
+  .strip.n3 .mark.we i:nth-child(2){flex:0 0 calc((20px - 4px) / 3)}
+}
+@media (max-width:520px){
+  .mast{padding-top:52px}
+  .set{grid-template-columns:minmax(0,1fr) 46px 32px; column-gap:6px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+</style>
+</head>
+<body>
+<div id="tip" role="status" aria-live="polite"></div>
+<div id="pop" role="dialog" aria-modal="false" aria-label="套餐菜单"></div>
+
+<div class="wrap">
+
+<header class="mast">
+  <h1>餐厅周预定情况排名</h1>
+  <p class="when">2026 锦绣食韵东方 · 秋季餐厅周，9月3日至27日</p>
+  <p class="stamp" id="stamp"></p>
+</header>
+
+<div class="controls">
+  <div class="seg" id="fTier"></div>
+  <div class="seg" id="fArea"></div>
+  <div class="tools">
+    <select class="sel" id="fCui" aria-label="按菜系筛选"></select>
+    <div class="seg" id="fParty"></div>
+    <input class="q" id="q" type="search" placeholder="搜索餐厅或菜系" aria-label="搜索餐厅或菜系">
+    <span class="count" id="count"></span>
+  </div>
+</div>
+
+<div class="key">
+  <span><span class="dot tall" style="background:var(--gone)"></span>已订满</span>
+  <span><span class="dot tall" style="background:var(--few)"></span>仅剩少量</span>
+  <span><span class="dot tall" style="background:var(--open)"></span>可预订</span>
+  <span><span class="dot tall" style="background:var(--rule)"></span>不供应</span>
+  <span title="以上海时间为准；当天中午 12 点后早午餐与午餐不再可订，晚餐全天可订"><span class="dot tall" style="background:var(--gone);opacity:.22"></span>已过期</span>
+</div>
+
+<div class="list" id="list"></div>
+<button class="more" id="more" hidden></button>
+<div class="empty" id="empty" hidden>没有符合条件的餐厅。</div>
+
+<footer>
+  <p><b>怎么算的。</b>从 DiningCity 的公开列表接口，把 25 个活动日、每家餐厅供应的每一个时段——早午餐、午餐、晚餐——按两人位全部扫过一遍，再与网站实时页面比对核验。一个时段订满记 1 分，只剩少量记 0.25 分：小型吧台和无菜单料理常年挂着「少量剩余」，这个状态并不能充分说明有多抢手。每个时段还会按它在整个活动中的难卖程度加权，所以卖空一个周三午市，比卖空一个周六晚上得分更高。最终分数就是这份加权总和除以该店手上所有可卖的时段。</p>
+  <p style="margin-top:14px"><b>哪些没有计入。</b>一个时段消失，可能是卖完了，也可能是当天不开门。因此，如果一家店整体上大量可订、却每个周一都全黑，那个星期几会从它的分母里去掉，而不是算作需求——这样处理的时段（<span id="fClosed"></span>）在色带里显示为灰色，9月3日的午餐与早午餐同理，它们在采集时已过当日截单时间。另有<span id="fUnver"></span>，全程没有放出任何可订时段，网站却仍标注可预订；这更像是挂着没上线，而不是订满，因此完全不纳入榜单。座位级别的余量并不公开——DiningCity 只给出已订满、仅剩少量、可预订三种状态。</p>
+  <p style="margin-top:14px"><b>历史与更新。</b>往届（2024 春季至 2026 春季）的接口只保留活动名称，餐厅与余量在活动结束后即被清空，无法回溯。因此本页采用累积快照：每次抓取写入一份新的 <code>rw-data/snapshots/</code> 文件，旧快照不被覆盖，趋势由这些快照累积而来。<span id="fSnaps"></span><br><br>数据来源：<a href="https://restaurantweek.diningcity.cn/lang/zh/cities/shanghai/restaurants">restaurantweek.diningcity.cn</a></p>
+</footer>
+
+</div>
+
+<script>
+const D = /*__DATA__*/;
+const PAGE = Infinity;
+let shown = PAGE, tier = 'all', area = 'all', cui = 'all', party = 'all', q = '';
+
+/* tooltip */
+const tip=document.getElementById('tip');
+const moveTip=e=>{const r=tip.getBoundingClientRect();
+  let x=e.clientX+14,y=e.clientY-r.height-12;
+  if(x+r.width>innerWidth-10)x=e.clientX-r.width-14;
+  if(y<8)y=e.clientY+18;
+  tip.style.left=x+'px';tip.style.top=y+'px';};
+addEventListener('scroll',()=>tip.classList.remove('on'),{passive:true});
+
+/* filters */
+const mk=(host,items,cur,fn)=>{
+  host.innerHTML='';
+  items.forEach(([val,label])=>{
+    const b=document.createElement('button');
+    b.className='f'; b.textContent=label; b.dataset.v=val;
+    b.setAttribute('aria-pressed', val===cur());
+    b.onclick=()=>{fn(val); shown=PAGE; render();};
+    host.append(b);
+  });
+};
+function buildFilters(){
+  mk(document.getElementById('fTier'),
+    [['all','全部价位'],...D.tiers.map(t=>[t,t])], ()=>tier, v=>tier=v);
+  mk(document.getElementById('fArea'),
+    [['all','全部区域'],...D.districts.slice(0,6).map(d=>[d,d])], ()=>area, v=>area=v);
+  // only offer a party size that actually narrows the list
+  const useful=D.partySizes.filter(n=>D.rows.some(r=>r.minSeats>n));
+  mk(document.getElementById('fParty'),
+    [['all','不限人数'],...useful.map(n=>[String(n),n===1?'可一人预订':`${n} 人可订`])],
+    ()=>party, v=>party=v);
+  const sel=document.getElementById('fCui');
+  sel.innerHTML='<option value="all">全部菜系</option>'+
+    D.cuisines.map(c=>`<option value="${c.name}">${c.name}（${c.n}）</option>`).join('');
+  sel.onchange=()=>{cui=sel.value; sel.dataset.on=cui==='all'?'0':'1'; shown=PAGE; render();};
+}
+document.getElementById('q').addEventListener('input',e=>{
+  q=e.target.value.trim().toLowerCase(); shown=PAGE; render();
+});
+
+const WE=new Set(D.weekendIdx);
+/* "Now" is decided when the page is opened, in festival time. ?today=YYYY-MM-DD overrides for testing. */
+const TODAY = new URLSearchParams(location.search).get('today')
+  || new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai'}).format(new Date());
+const TODAY_IDX = D.dates.indexOf(TODAY) >= 0 ? D.dates.indexOf(TODAY)
+  : (TODAY > D.dates[D.dates.length-1] ? D.dates.length : -1);   // after festival: all past; before: none
+const SH_HOUR = +(new URLSearchParams(location.search).get('hour')
+  ?? new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Shanghai',hour:'2-digit',hour12:false}).format(new Date()));
+/* today's brunch/lunch close at noon Shanghai time; today's dinner stays open all day */
+const isPast = (i, meal) => i < TODAY_IDX || (i === TODAY_IDX && meal !== 'dinner' && SH_HOUR >= 12);
+const fmt=d=>{const[,m,dd]=d.split('-'); return `${+m}月${+dd}日`;};
+
+function match(r){
+  return (tier==='all'||r.tier===tier) && (area==='all'||r.loc===area) &&
+         (cui==='all'||r.cuis.includes(cui)) &&
+         (party==='all'||r.minSeats<=+party) &&
+         (!q || r.name.toLowerCase().includes(q) || r.cuis.join(' ').toLowerCase().includes(q));
+}
+
+function row(r){
+  const n = r.svcs.length, h = n>2 ? 46 : 36;
+  const cls = v => v==='gone'?'g':v==='few'?'f':v==='na'?'na':'';
+  const marks = D.dates.map((d,i)=>
+    `<span class="mark${WE.has(i)?' we':''}" data-i="${i}">${
+      r.svcs.map((s,si)=>`<i class="${cls(s.strip[i])}${isPast(i,s.en)?' past':''}" data-s="${si}"></i>`).join('')}</span>`).join('');
+  const slug='r-'+r.url.split('/').pop();
+  return `<div class="r${r.flag==='no'?' top':''}" data-rank="${r.rank}" id="${slug}">
+    <div class="rk">${r.rank}</div>
+    <div class="nm"><a href="${r.url}" target="_blank" rel="noopener">${r.name}</a></div>
+    <div class="meta"><span>${r.loc}</span><span>${r.tier}</span><span class="rt">${r.rating?r.rating.toFixed(1)+' / 10':'暂无评分'}</span><span title="${r.cui}">${r.cui}</span></div>
+    <div class="stack labels" style="--n:${n};--h:${h}px">
+      ${r.svcs.map((s,si)=>`<div class="set">${s.courses&&s.courses.length
+          ? `<button class="t" data-si="${si}" aria-haspopup="dialog">${s.t}</button>`
+          : `<i>${s.t}</i>`}<b>${s.p||'—'}</b>${s.min?`<u title="最低 ${s.min} 人起订"><svg viewBox="0 0 8 9" aria-hidden="true"><circle cx="4" cy="2.1" r="2.1"/><path d="M0 9c0-2.2 1.8-3.9 4-3.9s4 1.7 4 3.9z"/></svg>${s.min}</u>`:''}</div>`).join('')}
+    </div>
+    <div class="strip${n>2?' n3':''}" style="--h:${h}px" role="img"
+         aria-label="${r.svcs.map(s=>`${s.t}：${s.poss} 个时段中 ${s.gone} 个已订满`).join('；')}">${marks}</div>
+    <div class="stack counts" style="--n:${n};--h:${h}px">
+      ${r.svcs.map(s=>`<div>${s.gone}/${s.poss}</div>`).join('')}
+    </div>
+    <div class="score">
+      <b>${r.score}%</b>
+    </div></div>`;
+}
+
+function render(){
+  const rows=D.rows.filter(match);
+  const slice=rows.slice(0,shown);
+  document.getElementById('list').innerHTML=slice.map(row).join('');
+  document.getElementById('empty').hidden=rows.length>0;
+  document.getElementById('count').textContent=
+    rows.length? `共 ${rows.length} 家餐厅` : '';
+  const more=document.getElementById('more');
+  more.hidden=rows.length<=shown;
+  more.textContent=`再显示 ${Math.min(PAGE,rows.length-shown)} 家`;
+  document.querySelectorAll('button.f').forEach(b=>{
+    const g=b.parentElement.id;
+    const cur=g==='fTier'?tier:g==='fArea'?area:party;
+    b.setAttribute('aria-pressed', b.dataset.v===cur);
+  });
+  wireMarks(slice);
+  if(location.hash) markHit(location.hash.slice(1),false);
+}
+
+const LABEL={gone:'已订满',few:'仅剩少量',open:'可预订',na:'当天不供应'};
+let byRank={};
+function wireMarks(slice){ byRank=Object.fromEntries(slice.map(r=>[r.rank,r])); }
+const listEl=document.getElementById('list');
+listEl.addEventListener('mouseover',e=>{
+  const band=e.target.closest('.mark i'); if(!band) return;
+  const r=byRank[e.target.closest('.r').dataset.rank]; if(!r) return;
+  const s=r.svcs[+band.dataset.s], i=+band.closest('.mark').dataset.i;
+  tip.innerHTML=`<b>${r.name}</b>${s.t} ${s.p}　${fmt(D.dates[i])}${WE.has(i)?'（周末）':''}<br>${LABEL[s.strip[i]]}${isPast(i,s.en)?'　·　已过期':''}`;
+  tip.classList.add('on'); moveTip(e);
+});
+listEl.addEventListener('mousemove',e=>{ if(tip.classList.contains('on')) moveTip(e); });
+listEl.addEventListener('mouseout',e=>{ if(e.target.closest('.mark i')) tip.classList.remove('on'); });
+
+/* ---- set-menu popover ---- */
+const pop=document.getElementById('pop');
+let popBtn=null;
+function closePop(){ pop.classList.remove('on'); if(popBtn){popBtn.setAttribute('aria-expanded','false'); popBtn=null;} }
+function openPop(btn){
+  const r=byRank[btn.closest('.r').dataset.rank]; if(!r) return;
+  const s=r.svcs[+btn.dataset.si];
+  pop.innerHTML=`<button class="close" aria-label="关闭">✕</button>
+    <div class="ph"><h4>${s.t}</h4><span class="r">${s.p||''}${s.min?` · ${s.min} 人起订`:''}</span></div>
+    <p class="rest">${r.name}</p>` +
+    (s.courses.length
+      ? (()=>{                       // collapse consecutive dishes under one heading
+          const gs=[];
+          s.courses.forEach(c=>{
+            const g=c.g||'', last=gs[gs.length-1];
+            if(last && last.g===g) last.items.push(c.n); else gs.push({g,items:[c.n]});
+          });
+          return gs.map(x=>`<div class="grp">${x.g?`<h5>${x.g}</h5>`:''}<ul>${
+            x.items.map(n=>`<li>${n}</li>`).join('')}</ul></div>`).join('');
+        })()
+      : '<p class="none">这份套餐没有公开菜单。</p>');
+  pop.classList.add('on');
+  pop.querySelector('.close').onclick=()=>{const t=popBtn; closePop(); t&&t.focus();};
+  popBtn=btn; btn.setAttribute('aria-expanded','true');
+  placePop();
+}
+function placePop(){
+  if(!popBtn) return;
+  const b=popBtn.getBoundingClientRect();
+  if(b.bottom<0 || b.top>innerHeight){ closePop(); return; }   // anchor scrolled away
+  const pr=pop.getBoundingClientRect();
+  let x=Math.min(b.left, innerWidth-pr.width-14);
+  let y=b.bottom+8; if(y+pr.height>innerHeight-12) y=Math.max(12, b.top-pr.height-8);
+  pop.style.left=Math.max(14,x)+'px'; pop.style.top=y+'px';
+}
+listEl.addEventListener('click',e=>{
+  const btn=e.target.closest('.set button.t'); if(!btn) return;
+  e.preventDefault();
+  if(popBtn===btn){ closePop(); return; }
+  openPop(btn);
+});
+document.addEventListener('click',e=>{
+  if(pop.classList.contains('on') && !pop.contains(e.target) && !e.target.closest('.set button.t')) closePop();
+});
+addEventListener('keydown',e=>{ if(e.key==='Escape'&&pop.classList.contains('on')){const t=popBtn;closePop();t&&t.focus();} });
+addEventListener('scroll',placePop,{passive:true});
+addEventListener('resize',placePop);
+
+/* ---- row permalinks: click a row → address bar gets #slug; open such a link → scroll + highlight ---- */
+function markHit(id, scroll){
+  document.querySelectorAll('.r.hit').forEach(x=>x.classList.remove('hit'));
+  const el=id && document.getElementById(id); if(!el) return;
+  el.classList.add('hit');
+  if(scroll) el.scrollIntoView({block:'start'});
+}
+listEl.addEventListener('click',e=>{
+  if(e.target.closest('a, button, #pop')) return;          // links, set-menu buttons, popover keep their own behaviour
+  if(String(getSelection()).length) return;                 // don't hijack a text selection
+  const row=e.target.closest('.r'); if(!row) return;
+  history.replaceState(null,'','#'+row.id);
+  markHit(row.id,false);
+});
+addEventListener('hashchange',()=>markHit(location.hash.slice(1),true));
+
+document.getElementById('more').onclick=()=>{shown+=PAGE; render();};
+const put=(id,html)=>{const el=document.getElementById(id); if(el) el.innerHTML=html;};
+put('fSnaps', D.meta.snapshots>1 ? `目前已累积 ${D.meta.snapshots} 份快照。` : '目前只有 1 份快照，尚无法给出趋势。');
+put('fClosed', `共 ${D.meta.closed} 个`);
+put('fUnver', D.unverified.length ? `${D.unverified.length} 家（${D.unverified.map(u=>u.name).join('、')}）` : '若干家');
+put('stamp',
+  `数据更新于 <b>${D.meta.capturedAt}</b>　·　已累积 ${D.meta.snapshots} 份快照`);
+buildFilters(); render();
+if(location.hash) markHit(location.hash.slice(1),true);
+</script>
+</body>
+</html>
