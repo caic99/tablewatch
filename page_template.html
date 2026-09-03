@@ -31,7 +31,7 @@
 :root{
   --page:#F4F2F5; --panel:#EAE6EC; --ink:#2A1D28; --ink-2:#6E5F6B; --ink-3:#9A8D9E;
   --rule:#DCD6DE; --rule-2:#C7BECB;
-  --gone:#CB4A66; --few:#E0A800; --open:#00806B;
+  --gone:#CB4A66; --few:#E0A800; --open:#00806B; --star:#F3D35E;
   --serif:"Noto Serif SC","Songti SC","Source Han Serif SC",Georgia,serif;
   --sans:"Archivo","Helvetica Neue",-apple-system,"PingFang SC",sans-serif;
 }
@@ -39,7 +39,7 @@
   :root{
     --page:#191218; --panel:#241A22; --ink:#F0E9EE; --ink-2:#A5949F; --ink-3:#776873;
     --rule:#33262F; --rule-2:#4A3743;
-    --gone:#E05C7A; --few:#E3B341; --open:#00A488;
+    --gone:#E05C7A; --few:#E3B341; --open:#00A488; --star:#E9C74B;
   }
 }
 *{box-sizing:border-box}
@@ -94,6 +94,7 @@ button.f{
 }
 button.f:hover{border-color:var(--ink-3); color:var(--ink)}
 button.f[aria-pressed="true"]{background:var(--ink); border-color:var(--ink); color:var(--page)}
+button.f .ico{width:11px; height:11px; margin:0 5px -1px 0; fill:var(--star); stroke:var(--star); stroke-width:2; stroke-linejoin:round}
 select.sel{
   min-width:0; flex-shrink:1;
   font:inherit; font-size:.8125rem; color:var(--ink-2); background:none; cursor:pointer;
@@ -177,6 +178,14 @@ input.q:focus{border-color:var(--rule-2); outline:none; background:var(--page)}
 
 .score{grid-column:6; grid-row:1/3; text-align:right}
 .score b{display:block; font-size:1.0625rem; font-weight:600; line-height:1.15}
+.star{display:inline-block; margin:0 0 0 .4em; padding:2px; line-height:0; vertical-align:1px;
+  background:none; border:0; cursor:pointer; color:var(--rule-2)}          /* unstarred: dim outline */
+.star svg{width:14px; height:14px; display:block; fill:none; stroke:currentColor; stroke-width:2.2;
+  stroke-linejoin:round; stroke-linecap:round}                             /* round joins = soft points */
+.star:hover{color:var(--ink-2)}
+.star[aria-pressed="true"]{color:var(--star)}                              /* starred: 鹅黄 */
+.star[aria-pressed="true"] svg{fill:currentColor}
+.star[aria-pressed="true"]:hover{color:var(--star)}
 .score span{font-size:.6875rem; color:var(--ink-2)}
 
 .more{
@@ -314,6 +323,7 @@ footer a:hover{color:var(--gone); border-bottom-color:var(--gone)}
   <div class="seg" id="fTier"></div>
   <div class="seg" id="fArea"></div>
   <div class="tools">
+    <button class="f" id="fStar" aria-pressed="false" title="只看已收藏的餐厅"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.75 5.7 6.25.85-4.55 4.4 1.15 6.25L12 17.4l-5.6 3l1.15-6.25L3 9.75l6.25-.85z"/></svg>已收藏 <span id="starN">0</span></button>
     <select class="sel" id="fCui" aria-label="按菜系筛选"></select>
     <div class="seg" id="fParty"></div>
     <input class="q" id="q" type="search" placeholder="搜索餐厅或菜系" aria-label="搜索餐厅或菜系">
@@ -344,7 +354,24 @@ footer a:hover{color:var(--gone); border-bottom-color:var(--gone)}
 <script>
 const D = /*__DATA__*/;
 const PAGE = Infinity;
-let shown = PAGE, tier = 'all', area = 'all', cui = 'all', party = 'all', q = '';
+let shown = PAGE, tier = 'all', area = 'all', cui = 'all', party = 'all', q = '', onlyStars = false;
+/* ---- stars: saved in a cookie (a year, same-site), mirrored to localStorage for file:// and as overflow room ---- */
+const STAR_KEY='tw_stars';
+const slugOf = r => r.url.split('/').pop();
+function readStars(){
+  const s=new Set();
+  const m=document.cookie.match(/(?:^|; )tw_stars=([^;]*)/);
+  if(m) m[1].split(',').filter(Boolean).forEach(x=>s.add(decodeURIComponent(x)));
+  try{ JSON.parse(localStorage.getItem(STAR_KEY)||'[]').forEach(x=>s.add(x)); }catch(_){}
+  return s;
+}
+function writeStars(){
+  const v=[...STARS].map(encodeURIComponent).join(',');
+  document.cookie=`${STAR_KEY}=${v}; Max-Age=31536000; Path=/; SameSite=Lax`;
+  try{ localStorage.setItem(STAR_KEY, JSON.stringify([...STARS])); }catch(_){}
+}
+const STARS=readStars();
+function updateStarChip(){ const n=document.getElementById('starN'); if(n) n.textContent=STARS.size; }
 
 /* tooltip */
 const tip=document.getElementById('tip');
@@ -371,10 +398,8 @@ function buildFilters(){
     [['all','全部价位'],...D.tiers.map(t=>[t,t])], ()=>tier, v=>tier=v);
   mk(document.getElementById('fArea'),
     [['all','全部区域'],...D.districts.slice(0,6).map(d=>[d,d])], ()=>area, v=>area=v);
-  // only offer a party size that actually narrows the list
-  const useful=D.partySizes.filter(n=>D.rows.some(r=>r.minSeats>n));
   mk(document.getElementById('fParty'),
-    [['all','不限人数'],...useful.map(n=>[String(n),n===1?'可一人预订':`${n} 人可订`])],
+    [['all','不限人数'],...D.partySizes.map(n=>[String(n),`${n}人`])],
     ()=>party, v=>party=v);
   const sel=document.getElementById('fCui');
   sel.innerHTML='<option value="all">全部菜系</option>'+
@@ -399,8 +424,9 @@ const fmt=d=>{const[,m,dd]=d.split('-'); return `${+m}月${+dd}日`;};
 
 function match(r){
   return (tier==='all'||r.tier===tier) && (area==='all'||r.loc===area) &&
+         (!onlyStars || STARS.has(slugOf(r))) &&
          (cui==='all'||r.cuis.includes(cui)) &&
-         (party==='all'||r.minSeats<=+party) &&
+         (party==='all'||r.svcs.some(s=>s.min===+party)) &&      // a set with that 起订人数
          (!q || r.name.toLowerCase().includes(q) || r.cuis.join(' ').toLowerCase().includes(q));
 }
 
@@ -413,7 +439,7 @@ function row(r){
   const slug='r-'+r.url.split('/').pop();
   return `<div class="r${r.flag==='no'?' top':''}" data-rank="${r.rank}" id="${slug}">
     <div class="rk">${r.rank}</div>
-    <div class="nm"><a href="${r.url}" target="_blank" rel="noopener">${r.name}</a></div>
+    <div class="nm"><a href="${r.url}" target="_blank" rel="noopener">${r.name}</a><button class="star" aria-pressed="${STARS.has(slugOf(r))}" aria-label="收藏 ${r.name}" title="收藏"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.2l2.75 5.7 6.25.85-4.55 4.4 1.15 6.25L12 17.4l-5.6 3l1.15-6.25L3 9.75l6.25-.85z"/></svg></button></div>
     <div class="meta"><span>${r.loc}</span><span>${r.tier}</span><span class="rt">${r.rating?r.rating.toFixed(1)+' / 10':'暂无评分'}</span><span title="${r.cui}">${r.cui}</span></div>
     <div class="stack labels" style="--n:${n};--h:${h}px">
       ${r.svcs.map((s,si)=>`<div class="set">${s.courses&&s.courses.length
@@ -440,12 +466,13 @@ function render(){
   const more=document.getElementById('more');
   more.hidden=rows.length<=shown;
   more.textContent=`再显示 ${Math.min(PAGE,rows.length-shown)} 家`;
-  document.querySelectorAll('button.f').forEach(b=>{
+  document.querySelectorAll('button.f:not(#fStar)').forEach(b=>{
     const g=b.parentElement.id;
     const cur=g==='fTier'?tier:g==='fArea'?area:party;
     b.setAttribute('aria-pressed', b.dataset.v===cur);
   });
   wireMarks(slice);
+  updateStarChip();
   if(location.hash) markHit(location.hash.slice(1),false);
 }
 
@@ -510,6 +537,21 @@ document.addEventListener('click',e=>{
 addEventListener('keydown',e=>{ if(e.key==='Escape'&&pop.classList.contains('on')){const t=popBtn;closePop();t&&t.focus();} });
 addEventListener('scroll',placePop,{passive:true});
 addEventListener('resize',placePop);
+
+/* ---- star / unstar ---- */
+listEl.addEventListener('click',e=>{
+  const b=e.target.closest('.star'); if(!b) return;
+  const row=b.closest('.r'); const slug=row.id.replace(/^r-/,'');
+  const on=!STARS.has(slug); on?STARS.add(slug):STARS.delete(slug);
+  writeStars(); updateStarChip();
+  b.setAttribute('aria-pressed',on);
+  if(onlyStars && !on) render();                   // filtered to stars: the row leaves the list
+});
+document.getElementById('fStar').addEventListener('click',()=>{
+  onlyStars=!onlyStars;
+  document.getElementById('fStar').setAttribute('aria-pressed',onlyStars);
+  shown=PAGE; render();
+});
 
 /* ---- row permalinks: click a row → address bar gets #slug; open such a link → scroll + highlight ---- */
 function markHit(id, scroll){
