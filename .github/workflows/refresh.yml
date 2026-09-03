@@ -33,5 +33,9 @@ jobs:
             echo "no changes"
           else
             git commit -m "snapshot $(TZ=Asia/Shanghai date '+%Y-%m-%d %H:%M') CST"
-            git push
+            # a hand push may land while this run is scraping: rebase onto it and retry
+            for i in 1 2 3; do
+              git pull --rebase --quiet origin main && git push && break
+              echo "push attempt $i failed, retrying"; sleep 10
+            done
           fi
