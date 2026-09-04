@@ -85,8 +85,8 @@ def main():
     today = started.date().isoformat()
 
     def eligible(d, ml):
-        # same-day lunch/brunch is past its cut-off and reads as sold out
-        return not (d == today and ml != 'dinner')
+        # same-day lunch/brunch after the noon cut-off reads as sold out; before noon it is live
+        return not (d == today and ml != 'dinner' and started.hour >= 12)
 
     jobs = [(d, ml) for d in dates for ml in ORDER]
     avail = {}

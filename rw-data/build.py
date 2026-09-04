@@ -42,6 +42,37 @@ def load_snapshots():
     return [json.load(open(f)) for f in files]
 
 
+def merged(snaps):
+    """The newest snapshot on the full festival axis.
+
+    DiningCity drops each day from its date list once it has passed, so a fresh
+    snapshot alone would shrink the strip day by day. Union the dates across all
+    snapshots and, for days the newest one no longer carries, keep each
+    restaurant's state from the last snapshot that still had them."""
+    latest = snaps[-1]
+    dates = sorted({d for s in snaps for d in s['dates']})
+    if dates == latest['dates']:
+        return latest
+    out = dict(latest, dates=dates, restaurants={})
+    have = set(latest['dates'])
+    for rid, r in latest['restaurants'].items():
+        avail = {}
+        for ml in r['meals']:
+            cur = dict(zip(latest['dates'], r['avail'][ml]))
+            for d in dates:
+                if d in have:
+                    continue
+                for s in reversed(snaps[:-1]):
+                    if d in s['dates'] and rid in s['restaurants'] and ml in s['restaurants'][rid]['avail']:
+                        cur[d] = s['restaurants'][rid]['avail'][ml][s['dates'].index(d)]
+                        break
+                else:
+                    cur[d] = 'x'
+            avail[ml] = ''.join(cur[d] for d in dates)
+        out['restaurants'][rid] = dict(r, avail=avail)
+    return out
+
+
 def rank(snap):
     """Score every restaurant in one snapshot. Returns (rows, unverified, closed_count)."""
     dates = snap['dates']
@@ -131,14 +162,14 @@ def rank(snap):
 
 def main():
     snaps = load_snapshots()
-    latest = snaps[-1]
+    latest = merged(snaps)
     rows, unverified, _ = rank(latest)
     closed = sum(r['closed'] for r in rows)
 
     # movement against the previous snapshot, if we have one
     history = []
     if len(snaps) > 1:
-        prev_rows, _, _ = rank(snaps[-2])
+        prev_rows, _, _ = rank(merged(snaps[:-1]))
         prev = {r['id']: r for r in prev_rows}
         for r in rows:
             p = prev.get(r['id'])
