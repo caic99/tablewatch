@@ -55,11 +55,18 @@ def merged(snaps):
     dates = sorted({d for s in snaps for d in s['dates'] if d >= AXIS_START})
     idx = [{d: i for i, d in enumerate(s['dates'])} for s in snaps]
     out = dict(latest, dates=dates, restaurants={})
+    cap_day = latest['capturedAt'][:10]
     for rid, r in latest['restaurants'].items():
         avail = {}
+        # participation window (newest snapshot only lists today onward); a day the
+        # restaurant never offered is 'x' in every snapshot, not a sold-out day
+        win = r.get('days')
         for ml in r['meals']:
             cells = []
             for d in dates:
+                if win is not None and d >= cap_day and d not in win:
+                    cells.append('x')
+                    continue
                 v = 'x'
                 for s, ix in zip(reversed(snaps), reversed(idx)):
                     rr = s['restaurants'].get(rid)
@@ -127,6 +134,8 @@ def rank(snap):
             continue
 
         denom = sum(W[(d, ml)] for i, d, ml in elig)
+        if denom == 0:
+            continue
         num = sum(W[(d, ml)] for i, d, ml in gone) + FEW_WEIGHT * sum(W[(d, ml)] for i, d, ml in few)
 
         svcs = []
