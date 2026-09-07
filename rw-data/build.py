@@ -33,6 +33,7 @@ def price(raw):
     return '¥' + (f'{v:,.2f}'.rstrip('0').rstrip('.') if v % 1 else f'{int(v):,}')
 FEW_WEIGHT = 0.25          # 少量剩余 is weak evidence: small counters sit there permanently
 CLOSURE_GUARD = 0.60       # only trim recurring closures for broadly-available restaurants
+AXIS_START = '2026-09-04'  # tracking began after the 9.3 lunch cut-off, so that day has no lunch data: drop it
 
 
 def load_snapshots():
@@ -51,7 +52,7 @@ def merged(snaps):
     same-day post-noon cut-off for brunch/lunch) takes the value from the most
     recent snapshot that still recorded it, so past days keep their lunch state."""
     latest = snaps[-1]
-    dates = sorted({d for s in snaps for d in s['dates']})
+    dates = sorted({d for s in snaps for d in s['dates'] if d >= AXIS_START})
     idx = [{d: i for i, d in enumerate(s['dates'])} for s in snaps]
     out = dict(latest, dates=dates, restaurants={})
     for rid, r in latest['restaurants'].items():

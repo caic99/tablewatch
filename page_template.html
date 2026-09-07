@@ -164,7 +164,7 @@ input.q:focus{border-color:var(--rule-2); outline:none; background:var(--page)}
 .strip{grid-column:4; grid-row:1/3; display:flex; gap:2px; height:var(--h); width:var(--sw);
   align-items:center; justify-content:flex-start; contain:layout style paint}
 /* Fixed block width per breakpoint: resizing the window must not re-lay 8,700 marks. */
-:root{--mw:16px; --sw:calc(25 * var(--mw) + 48px)}
+:root{--mw:16px; --nd:24; --sw:calc(var(--nd) * var(--mw) + (var(--nd) - 1) * 2px)}
 .mark{flex:0 0 var(--mw); width:var(--mw); display:flex; flex-direction:column; gap:2px;
   height:calc(var(--h) / 1.5)}
 .mark.we{height:var(--h)}
@@ -411,6 +411,7 @@ document.getElementById('q').addEventListener('input',e=>{
 });
 
 const WE=new Set(D.weekendIdx);
+document.documentElement.style.setProperty('--nd', D.dates.length);
 /* "Now" is decided when the page is opened, in festival time. ?today=YYYY-MM-DD overrides for testing. */
 const TODAY = new URLSearchParams(location.search).get('today')
   || new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai'}).format(new Date());
