@@ -33,6 +33,7 @@ def price(raw):
     return '¥' + (f'{v:,.2f}'.rstrip('0').rstrip('.') if v % 1 else f'{int(v):,}')
 FEW_WEIGHT = 0.25          # 少量剩余 is weak evidence: small counters sit there permanently
 CLOSURE_GUARD = 0.60       # only trim recurring closures for broadly-available restaurants
+TAIL_MIN_DAYS = 2          # final-days dark run treated as an early exit, not demand
 AXIS_START = '2026-09-04'  # tracking began after the 9.3 lunch cut-off, so that day has no lunch data: drop it
 
 
@@ -55,18 +56,16 @@ def merged(snaps):
     dates = sorted({d for s in snaps for d in s['dates'] if d >= AXIS_START})
     idx = [{d: i for i, d in enumerate(s['dates'])} for s in snaps]
     out = dict(latest, dates=dates, restaurants={})
-    cap_day = latest['capturedAt'][:10]
     for rid, r in latest['restaurants'].items():
-        avail = {}
-        # participation window (newest snapshot only lists today onward); a day the
-        # restaurant never offered is 'x' in every snapshot, not a sold-out day
-        win = r.get('days')
+        avail, ever_open = {}, {}
         for ml in r['meals']:
-            cells = []
+            cells, seen_open = [], []
             for d in dates:
-                if win is not None and d >= cap_day and d not in win:
-                    cells.append('x')
-                    continue
+                # was this sitting ever observed on sale, in any snapshot?
+                seen_open.append('1' if any(
+                    d in ix and rid in s['restaurants'] and ml in s['restaurants'][rid]['avail']
+                    and s['restaurants'][rid]['avail'][ml][ix[d]] in 'of'
+                    for s, ix in zip(snaps, idx)) else '0')
                 v = 'x'
                 for s, ix in zip(reversed(snaps), reversed(idx)):
                     rr = s['restaurants'].get(rid)
@@ -75,7 +74,8 @@ def merged(snaps):
                         break
                 cells.append(v)
             avail[ml] = ''.join(cells)
-        out['restaurants'][rid] = dict(r, avail=avail)
+            ever_open[ml] = ''.join(seen_open)
+        out['restaurants'][rid] = dict(r, avail=avail, everOpen=ever_open)
     return out
 
 
@@ -117,6 +117,20 @@ def rank(snap):
                     grp = [(i, d, ml) for i, d, m2 in slots if m2 == ml and wd[d] == day]
                     if grp and all(state[(i, ml)] == 'g' for i, d, _ in grp):
                         dropped |= set(grp)
+            # a run of final days where every sitting was dark from the first snapshot
+            # onward is the restaurant leaving the festival early, not a sell-out:
+            # DiningCity's calendar cannot tell the two apart, so infer it here
+            ever = r.get('everOpen') or {}
+            tail = []
+            for i in range(len(dates) - 1, -1, -1):
+                cells = [(i, dates[i], ml) for ml in r['meals'] if (i, ml) in state]
+                if cells and all(state[(i, ml)] == 'g' and ever.get(ml, '1' * len(dates))[i] == '0'
+                                 for _, _, ml in cells):
+                    tail += cells
+                else:
+                    break
+            if len({d for _, d, _ in tail}) >= TAIL_MIN_DAYS:
+                dropped |= set(tail)
         elig = [s for s in slots if s not in dropped]
         if not elig:
             continue

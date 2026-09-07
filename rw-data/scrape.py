@@ -122,9 +122,9 @@ def main():
             menus[rid] = mm
     print(f'  {len(menus)} menu lookups done')
 
-    # each restaurant's own participation window: the booking calendar greys out
-    # days outside it, but the per-day listing simply omits the restaurant, which
-    # would otherwise read as sold out. Only dates from today onward are returned.
+    # the booking calendar's selectable days (today onward). NOTE: this omits
+    # sold-out days as well as days outside the restaurant's participation window,
+    # so it cannot separate the two; kept as raw data only, never used to mask.
     def days(rid):
         try:
             d = get(f'{API}/restaurants/{rid}/dining_dates?project={PROJECT}&api-key={KEY}')
@@ -137,11 +137,6 @@ def main():
         for rid, ds in ex.map(days, master.keys()):
             windows[rid] = ds
     print(f'  {sum(1 for v in windows.values() if v is not None)} participation windows done')
-
-    def offered_on(rid, d):
-        # unknown window (lookup failed) or a past date: trust the listing
-        w = windows.get(rid)
-        return w is None or d < today or d in w
 
     CH = {'more': 'o', 'less': 'f'}
     snap = {'capturedAt': started.isoformat(timespec='minutes'),
@@ -158,7 +153,7 @@ def main():
             'pl': x.get('price_level'), 'rating': x.get('ratings_avg'),
             'cap': x.get('capacity_desc'), 'meals': offered, 'days': windows.get(rid),
             'menus': {m: menus.get(rid, {}).get(m, {}) for m in offered},
-            'avail': {m: ''.join('x' if not eligible(d, m) or not offered_on(rid, d)
+            'avail': {m: ''.join('x' if not eligible(d, m)
                                  else CH.get(avail[(d, m)].get(rid), 'g') for d in dates)
                       for m in offered}}
 
