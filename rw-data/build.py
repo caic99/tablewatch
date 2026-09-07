@@ -43,32 +43,30 @@ def load_snapshots():
 
 
 def merged(snaps):
-    """The newest snapshot on the full festival axis.
+    """The newest snapshot on the full festival axis, with masked cells back-filled.
 
     DiningCity drops each day from its date list once it has passed, so a fresh
     snapshot alone would shrink the strip day by day. Union the dates across all
-    snapshots and, for days the newest one no longer carries, keep each
-    restaurant's state from the last snapshot that still had them."""
+    snapshots. Any cell the newest snapshot lacks or masks as 'x' (the scraper's
+    same-day post-noon cut-off for brunch/lunch) takes the value from the most
+    recent snapshot that still recorded it, so past days keep their lunch state."""
     latest = snaps[-1]
     dates = sorted({d for s in snaps for d in s['dates']})
-    if dates == latest['dates']:
-        return latest
+    idx = [{d: i for i, d in enumerate(s['dates'])} for s in snaps]
     out = dict(latest, dates=dates, restaurants={})
-    have = set(latest['dates'])
     for rid, r in latest['restaurants'].items():
         avail = {}
         for ml in r['meals']:
-            cur = dict(zip(latest['dates'], r['avail'][ml]))
+            cells = []
             for d in dates:
-                if d in have:
-                    continue
-                for s in reversed(snaps[:-1]):
-                    if d in s['dates'] and rid in s['restaurants'] and ml in s['restaurants'][rid]['avail']:
-                        cur[d] = s['restaurants'][rid]['avail'][ml][s['dates'].index(d)]
+                v = 'x'
+                for s, ix in zip(reversed(snaps), reversed(idx)):
+                    rr = s['restaurants'].get(rid)
+                    if rr and d in ix and ml in rr['avail'] and rr['avail'][ml][ix[d]] != 'x':
+                        v = rr['avail'][ml][ix[d]]
                         break
-                else:
-                    cur[d] = 'x'
-            avail[ml] = ''.join(cur[d] for d in dates)
+                cells.append(v)
+            avail[ml] = ''.join(cells)
         out['restaurants'][rid] = dict(r, avail=avail)
     return out
 
