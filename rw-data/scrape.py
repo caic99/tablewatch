@@ -19,6 +19,7 @@ API     = 'https://api.diningcity.asia/public'
 HERE    = os.path.dirname(os.path.abspath(__file__))
 SNAPS   = os.path.join(HERE, 'snapshots')
 ORDER   = ['brunch', 'lunch', 'dinner']
+LUNCH_CUTOFF, DINNER_CUTOFF = 12, 20   # Shanghai hours after which same-day sittings are unknown, not sold out
 HEADERS = {'lang': 'zh', 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0',
            'Origin': 'https://restaurantweek.diningcity.cn'}
 
@@ -89,7 +90,11 @@ def main():
         # the noon cut-off read as sold out although nothing is on sale: mark them unknown
         if d < today:
             return False
-        return not (d == today and ml != 'dinner' and started.hour >= 12)
+        if d == today:
+            # lunch/brunch close at noon, dinner by about 20:00; after that the
+            # listing omits the restaurant, which would read as sold out
+            return started.hour < (DINNER_CUTOFF if ml == 'dinner' else LUNCH_CUTOFF)
+        return True
 
     jobs = [(d, ml) for d in dates for ml in ORDER]
     avail = {}
@@ -122,21 +127,32 @@ def main():
             menus[rid] = mm
     print(f'  {len(menus)} menu lookups done')
 
-    # the booking calendar's selectable days (today onward). NOTE: this omits
-    # sold-out days as well as days outside the restaurant's participation window,
-    # so it cannot separate the two; kept as raw data only, never used to mask.
+    # the booking calendar's days (today onward). A day the restaurant offers is
+    # listed — with available=false / tooltip 已订满 once it sells out — while a day
+    # outside its participation window is simply absent. Restaurants sold out for
+    # the whole festival (capacity_desc 'no', button 已订满) return an empty list.
     def days(rid):
         try:
             d = get(f'{API}/restaurants/{rid}/dining_dates?project={PROJECT}&api-key={KEY}')
-            return rid, [x['date'] for x in d]
+            return rid, ([x['date'] for x in d], [x['date'] for x in d if not x.get('available')])
         except Exception:
-            return rid, None
+            return rid, (None, None)
 
-    windows = {}
+    windows, full = {}, {}
     with cf.ThreadPoolExecutor(8) as ex:
-        for rid, ds in ex.map(days, master.keys()):
-            windows[rid] = ds
-    print(f'  {sum(1 for v in windows.values() if v is not None)} participation windows done')
+        for rid, (ds, fs) in ex.map(days, master.keys()):
+            windows[rid], full[rid] = ds, fs
+    print(f'  {sum(1 for v in windows.values() if v is not None)} booking calendars done')
+
+    def cell(rid, d, m):
+        if not eligible(d, m):
+            return 'x'
+        v = CH.get(avail[(d, m)].get(rid), 'g')
+        w = windows.get(rid)
+        # absent from a known, non-empty calendar and not on sale: not offered that day
+        if v == 'g' and w and d not in w:
+            return 'x'
+        return v
 
     CH = {'more': 'o', 'less': 'f'}
     snap = {'capturedAt': started.isoformat(timespec='minutes'),
@@ -151,11 +167,10 @@ def main():
             'loc': [l['name'] for l in (x.get('locations') or [])],
             'cui': [c['name'] for c in (x.get('cuisines') or [])],
             'pl': x.get('price_level'), 'rating': x.get('ratings_avg'),
-            'cap': x.get('capacity_desc'), 'meals': offered, 'days': windows.get(rid),
+            'cap': x.get('capacity_desc'), 'meals': offered,
+            'days': windows.get(rid), 'full': full.get(rid),
             'menus': {m: menus.get(rid, {}).get(m, {}) for m in offered},
-            'avail': {m: ''.join('x' if not eligible(d, m)
-                                 else CH.get(avail[(d, m)].get(rid), 'g') for d in dates)
-                      for m in offered}}
+            'avail': {m: ''.join(cell(rid, d, m) for d in dates) for m in offered}}
 
     os.makedirs(SNAPS, exist_ok=True)
     out = os.path.join(SNAPS, snap['capturedAt'].replace(':', '-') + '.json')

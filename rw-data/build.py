@@ -33,6 +33,7 @@ def price(raw):
     return '¥' + (f'{v:,.2f}'.rstrip('0').rstrip('.') if v % 1 else f'{int(v):,}')
 FEW_WEIGHT = 0.25          # 少量剩余 is weak evidence: small counters sit there permanently
 CLOSURE_GUARD = 0.60       # only trim recurring closures for broadly-available restaurants
+LUNCH_CUTOFF, DINNER_CUTOFF = 12, 20   # mirror scrape.py: same-day sittings read after these hours are unknown
 TAIL_MIN_DAYS = 2          # final-days dark run treated as an early exit, not demand
 AXIS_START = '2026-09-04'  # tracking began after the 9.3 lunch cut-off, so that day has no lunch data: drop it
 
@@ -55,24 +56,47 @@ def merged(snaps):
     latest = snaps[-1]
     dates = sorted({d for s in snaps for d in s['dates'] if d >= AXIS_START})
     idx = [{d: i for i, d in enumerate(s['dates'])} for s in snaps]
+
+    def val(s, ix, rid, ml, d):
+        """One cell of one snapshot, or 'x' if absent or captured after that
+        sitting's same-day cut-off (older snapshots did not mask dinner)."""
+        rr = s['restaurants'].get(rid)
+        if not rr or d not in ix or ml not in rr['avail']:
+            return 'x'
+        cap = s['capturedAt']
+        if d == cap[:10] and int(cap[11:13]) >= (DINNER_CUTOFF if ml == 'dinner' else LUNCH_CUTOFF):
+            return 'x'
+        return rr['avail'][ml][ix[d]]
     out = dict(latest, dates=dates, restaurants={})
+    cap_day = latest['capturedAt'][:10]
     for rid, r in latest['restaurants'].items():
         avail, ever_open = {}, {}
+        # booking-calendar window (today onward): an absent day is not offered. Past
+        # days carry no window data, so infer weekly closures from the future part:
+        # a weekday absent in every remaining occurrence (at least two) was closed then too
+        win = r.get('days') or None
+        closed_wd = set()
+        if win:
+            for day in range(7):
+                fut = [d for d in dates if d >= cap_day and datetime.date.fromisoformat(d).weekday() == day]
+                if len(fut) >= 2 and not any(d in win for d in fut):
+                    closed_wd.add(day)
         for ml in r['meals']:
             cells, seen_open = [], []
             for d in dates:
                 # was this sitting ever observed on sale, in any snapshot?
-                seen_open.append('1' if any(
-                    d in ix and rid in s['restaurants'] and ml in s['restaurants'][rid]['avail']
-                    and s['restaurants'][rid]['avail'][ml][ix[d]] in 'of'
-                    for s, ix in zip(snaps, idx)) else '0')
+                seen_open.append('1' if any(val(s, ix, rid, ml, d) in 'of'
+                                            for s, ix in zip(snaps, idx)) else '0')
                 v = 'x'
                 for s, ix in zip(reversed(snaps), reversed(idx)):
-                    rr = s['restaurants'].get(rid)
-                    if rr and d in ix and ml in rr['avail'] and rr['avail'][ml][ix[d]] != 'x':
-                        v = rr['avail'][ml][ix[d]]
+                    v = val(s, ix, rid, ml, d)
+                    if v != 'x':
                         break
                 cells.append(v)
+            if win:
+                cells = ['x' if v == 'g' and ((d >= cap_day and d not in win) or
+                                              (d < cap_day and datetime.date.fromisoformat(d).weekday() in closed_wd))
+                         else v for v, d in zip(cells, dates)]
             avail[ml] = ''.join(cells)
             ever_open[ml] = ''.join(seen_open)
         out['restaurants'][rid] = dict(r, avail=avail, everOpen=ever_open)
@@ -112,11 +136,14 @@ def rank(snap):
         # a weekday that is dark for every occurrence is a closure, not demand
         dropped = set()
         if live / len(slots) >= CLOSURE_GUARD:
+            # the booking calendar is per day, so a sitting offered only on some
+            # weekdays (weekend-only brunch, no Monday lunch) still needs this
             for ml in r['meals']:
                 for day in range(7):
                     grp = [(i, d, ml) for i, d, m2 in slots if m2 == ml and wd[d] == day]
                     if grp and all(state[(i, ml)] == 'g' for i, d, _ in grp):
                         dropped |= set(grp)
+        if r.get('days') is None and live / len(slots) >= CLOSURE_GUARD:
             # a run of final days where every sitting was dark from the first snapshot
             # onward is the restaurant leaving the festival early, not a sell-out:
             # DiningCity's calendar cannot tell the two apart, so infer it here
@@ -140,8 +167,12 @@ def rank(snap):
         few  = [s for s in elig if state[(s[0], s[2])] == 'f']
         open_ = [s for s in elig if state[(s[0], s[2])] == 'o']
 
-        # listed as bookable yet never published a single sitting: a dead listing
-        if not few and not open_ and r['cap'] != 'no':
+        # listed as bookable yet never seen with a single sitting on sale, in any
+        # snapshot: a dead listing (a real restaurant that sold out its last table
+        # was observed open earlier)
+        ever = r.get('everOpen')
+        never_open = all(c == '0' for ml in ever for c in ever[ml]) if ever else (not few and not open_)
+        if never_open and r['cap'] != 'no':
             unverified.append({'name': r['name'], 'loc': (r['loc'] or ['—'])[0]})
             continue
         if not gone and not few:
