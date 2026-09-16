@@ -127,10 +127,10 @@ def main():
             menus[rid] = mm
     print(f'  {len(menus)} menu lookups done')
 
-    # the booking calendar's days (today onward). A day the restaurant offers is
-    # listed — with available=false / tooltip 已订满 once it sells out — while a day
-    # outside its participation window is simply absent. Restaurants sold out for
-    # the whole festival (capacity_desc 'no', button 已订满) return an empty list.
+    # the booking calendar's days (today onward). A sold-out day is usually still
+    # listed with available=false (tooltip 已订满); a day the restaurant never offered
+    # is absent — but so is a day whose allotment was withdrawn after selling out,
+    # so absence alone is not proof. Whole-festival sell-outs return an empty list.
     def days(rid):
         try:
             d = get(f'{API}/restaurants/{rid}/dining_dates?project={PROJECT}&api-key={KEY}')
@@ -145,14 +145,11 @@ def main():
     print(f'  {sum(1 for v in windows.values() if v is not None)} booking calendars done')
 
     def cell(rid, d, m):
+        # raw reading only; whether a dark day is "not offered" is decided in
+        # build.py, which can also see whether it was ever open in earlier snapshots
         if not eligible(d, m):
             return 'x'
-        v = CH.get(avail[(d, m)].get(rid), 'g')
-        w = windows.get(rid)
-        # absent from a known, non-empty calendar and not on sale: not offered that day
-        if v == 'g' and w and d not in w:
-            return 'x'
-        return v
+        return CH.get(avail[(d, m)].get(rid), 'g')
 
     CH = {'more': 'o', 'less': 'f'}
     snap = {'capturedAt': started.isoformat(timespec='minutes'),

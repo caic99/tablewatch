@@ -66,7 +66,10 @@ def merged(snaps):
         cap = s['capturedAt']
         if d == cap[:10] and int(cap[11:13]) >= (DINNER_CUTOFF if ml == 'dinner' else LUNCH_CUTOFF):
             return 'x'
-        return rr['avail'][ml][ix[d]]
+        v = rr['avail'][ml][ix[d]]
+        # snapshots taken 2026-09-15..16 masked calendar-absent future days as 'x'
+        # at capture time; the listing had reported them dark, so read them as such
+        return 'g' if v == 'x' and d > cap[:10] else v
     out = dict(latest, dates=dates, restaurants={})
     cap_day = latest['capturedAt'][:10]
     for rid, r in latest['restaurants'].items():
@@ -74,13 +77,29 @@ def merged(snaps):
         # booking-calendar window (today onward): an absent day is not offered. Past
         # days carry no window data, so infer weekly closures from the future part:
         # a weekday absent in every remaining occurrence (at least two) was closed then too
+        # A day is "not offered" only if the calendar omits it AND no snapshot ever
+        # saw it on sale: withdrawn allotments also vanish from the calendar, and
+        # those were open once, so they stay sold-out.
+        # ...and only when the absence is structural: every remaining occurrence of
+        # that weekday, or an unbroken run to the festival's end (an early exit).
+        # An isolated absent day in an otherwise offered week most likely sold out
+        # before tracking began, so it stays red.
         win = r.get('days') or None
-        closed_wd = set()
+        closed_wd, structural = set(), set()
         if win:
             for day in range(7):
                 fut = [d for d in dates if d >= cap_day and datetime.date.fromisoformat(d).weekday() == day]
                 if len(fut) >= 2 and not any(d in win for d in fut):
                     closed_wd.add(day)
+                    structural |= set(fut)
+            tail = []
+            for d in reversed(dates):
+                if d >= cap_day and d not in win:
+                    tail.append(d)
+                else:
+                    break
+            if len(tail) >= TAIL_MIN_DAYS:
+                structural |= set(tail)
         for ml in r['meals']:
             cells, seen_open = [], []
             for d in dates:
@@ -94,9 +113,10 @@ def merged(snaps):
                         break
                 cells.append(v)
             if win:
-                cells = ['x' if v == 'g' and ((d >= cap_day and d not in win) or
-                                              (d < cap_day and datetime.date.fromisoformat(d).weekday() in closed_wd))
-                         else v for v, d in zip(cells, dates)]
+                cells = ['x' if v == 'g' and o == '0' and (
+                             (d >= cap_day and d in structural) or
+                             (d < cap_day and datetime.date.fromisoformat(d).weekday() in closed_wd))
+                         else v for v, o, d in zip(cells, seen_open, dates)]
             avail[ml] = ''.join(cells)
             ever_open[ml] = ''.join(seen_open)
         out['restaurants'][rid] = dict(r, avail=avail, everOpen=ever_open)
